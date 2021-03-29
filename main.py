@@ -36,10 +36,13 @@ async def send_permission_warning(channel, author, message, command, level):
 
 # sends a warning that includes the usage of the used command when the command syntax is incorrect
 async def send_use_warning(channel, author, message, command, role):
-  embed_message = discord.Embed(title="Figyelmeztetés!", description=":x:   **Helytelen használat!**\n\n{0}".format(commands[role][command]), color=0xff9f21)
-  embed_message.set_author(name=author.display_name, icon_url=author.avatar_url)
+  usage = commands_data[role][command]
+  title = "Figyelmeztetés!"
+  description = ":x:   **Helytelen használat!**\n\n{0}".format(usage)
+  embed_msg = discord.Embed(title=title, description=description, color=0xff9f21)
+  embed_msg.set_author(name=author.display_name, icon_url=author.avatar_url)
   await message.delete()
-  await channel.send(embed=embed_message)
+  await channel.send(embed=embed_msg)
 
 # updates the avatar of the bot
 @client.event
