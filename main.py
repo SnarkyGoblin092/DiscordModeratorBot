@@ -7,6 +7,7 @@ from commands import commands_data
 # creates the bot
 client = discord.Client()
 
+
 # checks if message starts with a command and returns the required role, 
 # the command and the commands usage
 def check_commands(message):
@@ -15,6 +16,7 @@ def check_commands(message):
       if message.startswith(command):
         return [role, command, usage]
   return False
+
 
 # sends a warning when a command was used in the wrong channel
 async def send_wrong_channel_warning(channel, author, role, message):
@@ -27,12 +29,14 @@ async def send_wrong_channel_warning(channel, author, role, message):
   await message.delete()
   await message.channel.send(embed=embed_message)
 
+
 # sends a warning when a command is used without permission
 async def send_permission_warning(channel, author, message, command, level):
   embed_message = discord.Embed(title="Figyelmeztetés!", description=":no_entry_sign:   **Nincs jogod ehhez a parancshoz:** {0}\nSzükséges jog: {1}".format("`{}`".format(command), level.mention), color = 0xff0000)
   embed_message.set_author(name = author.display_name, icon_url=author.avatar_url)
   await message.delete()
   await channel.send(embed=embed_message)
+
 
 # sends a warning that includes the usage of the used command when the command syntax is incorrect
 async def send_use_warning(channel, author, message, command, role):
@@ -44,6 +48,7 @@ async def send_use_warning(channel, author, message, command, role):
   await message.delete()
   await channel.send(embed=embed_msg)
 
+
 # updates the avatar of the bot
 @client.event
 async def on_ready():
@@ -51,6 +56,7 @@ async def on_ready():
   with open("moderator.gif", "rb") as img:
     b = img.read()
   await client.user.edit(avatar=b)
+
 
 # runs when a message is sent on the server
 @client.event
@@ -90,8 +96,10 @@ async def on_message(message):
     else:
       await send_permission_warning(channel, author, message,  command[1], role)
 
-# keeps the bot running
-keep_alive.keep_alive()
 
-# starts the bot
-client.run(os.getenv("TOKEN"))
+if __name__ == "__main__":
+  # keeps the bot running
+  keep_alive.keep_alive()
+
+  # starts the bot
+  client.run(os.getenv("TOKEN"))

@@ -118,6 +118,7 @@ commands_data = {
   }
 }
 
+
 # changes the nickname of the sender
 async def change_nickname(channel, message, author):
   try:
@@ -126,6 +127,7 @@ async def change_nickname(channel, message, author):
   except:
     embed_message = discord.Embed(title="Error!", description=":warning:   **Adminisztrátorok nevét nem tudom megváltoztatni!**", color = 0xff0000)
     await channel.send(embed=embed_message)
+
 
 # sends a message to the bot to say in chat
 async def bot_say(channel, message, command):
