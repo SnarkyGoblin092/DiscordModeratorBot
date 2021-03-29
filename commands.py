@@ -1,10 +1,10 @@
 import discord
 
 # stores the roles required to run commands
-command_groups = { "DJ", "Level1", "Level2" }
+#command_groups = { "DJ", "Level1", "Level2" }
 
 # stores the commands
-commands = {
+commands_data = {
   "DJ" : {
     "!join" : "Unknown usage!",
     "!summon" : "Unknown usage!",

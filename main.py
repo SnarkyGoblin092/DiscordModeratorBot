@@ -1,8 +1,8 @@
 import discord
 import os
 import keep_alive
-import commands
 import features
+from commands import commands_data
 
 # creates the bot
 client = discord.Client()
@@ -10,11 +10,10 @@ client = discord.Client()
 # checks if message starts with a command and returns the required role, 
 # the command and the commands usage
 def check_commands(message):
-  for x in commands.command_groups:
-    for y in commands.commands[x].keys():
-      if message.startswith(y):
-        return_values = [x, y, commands.commands[x].get(y)]
-        return return_values
+  for role, command_list in commands_data.items():
+    for command, usage in command_list.items():
+      if message.startswith(command):
+        return [role, command, usage]
   return False
 
 # sends a warning when a command was used in the wrong channel
@@ -37,7 +36,7 @@ async def send_permission_warning(channel, author, message, command, level):
 
 # sends a warning that includes the usage of the used command when the command syntax is incorrect
 async def send_use_warning(channel, author, message, command, role):
-  embed_message = discord.Embed(title="Figyelmeztetés!", description=":x:   **Helytelen használat!**\n\n{0}".format(commands.commands[role][command]), color=0xff9f21)
+  embed_message = discord.Embed(title="Figyelmeztetés!", description=":x:   **Helytelen használat!**\n\n{0}".format(commands[role][command]), color=0xff9f21)
   embed_message.set_author(name=author.display_name, icon_url=author.avatar_url)
   await message.delete()
   await channel.send(embed=embed_message)
@@ -71,7 +70,7 @@ async def on_message(message):
   if not command == False:  
     role = discord.utils.get(message.guild.roles, name=command[0])
     if role in author.roles:
-      if command[1] in commands.commands["DJ"].keys():
+      if command[1] in commands_data["DJ"].keys():
         if not channel.name == "music":
           await send_wrong_channel_warning(music_channel, author, role, message)
       else:
