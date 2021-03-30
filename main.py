@@ -15,7 +15,7 @@ def check_commands(message):
     for command, usage in command_list.items():
       if message.startswith(command):
         return [role, command, usage]
-  return False
+  return ["", "", ""]
 
 
 # sends a warning when a command was used in the wrong channel
@@ -62,39 +62,35 @@ async def on_ready():
 @client.event
 async def on_message(message):
   msg = message.content
-  author = message.author
-  channel = message.channel
+  msg_author = message.author
+  msg_channel = message.channel
 
-# checks if the sender is the bot
-  if author == client.user:
+  # checks if the sender is the bot
+  if msg_author == client.user:
     return
 
-# stores the channels used in the code
+  # stores the channels used in the code
   commands_channel = client.get_channel(821759044905074698)
   music_channel = client.get_channel(821946547767345152)
   bot_log_channel = client.get_channel(821967330661498931)
 
-# manages the commands users try to run
-  command = check_commands(msg)
-  if not command == False:  
-    role = discord.utils.get(message.guild.roles, name=command[0])
-    if role in author.roles:
-      if command[1] in commands_data["DJ"].keys():
-        if not channel.name == "music":
-          await send_wrong_channel_warning(music_channel, author, role, message)
-      else:
-        if channel.name == "commands":
-          if not command[2] == "":
-            if msg.split(command[1], 1)[1]:
-              await features.call_function(channel, author, msg, command[1], role)
-              await bot_log_channel.send("{0.mention} used `{1}`".format(author, msg))
-              return
-            else:
-              await send_use_warning(channel, author, message,  command[1], command[0])
-        else:
-          await send_wrong_channel_warning(commands_channel, author, role, message)
+  # manages the commands users try to run
+  role_name, command, usage = check_commands(msg)
+  if command:
+    role = discord.utils.get(message.guild.roles, name=role_name)
+    if not role in msg_author.roles:
+      await send_permission_warning(msg_channel, msg_author, message, command, role)
+      return
+
+    dj_commands = commands_data["DJ"].keys()
+    if command in dj_commands and not msg_channel.name == "music":
+      await send_wrong_channel_warning(music_channel, msg_author, role, message)
+    elif msg_channel.name == "commands" or msg_channel.name == "bot-test":
+      log_msg = "{0.mention} used `{1}`".format(msg_author, msg)
+      await bot_log_channel.send(log_msg)
+      await features.call_function(msg_channel, msg_author, msg, command, role)
     else:
-      await send_permission_warning(channel, author, message,  command[1], role)
+      await send_wrong_channel_warning(commands_channel, msg_author, role, message)
 
 
 if __name__ == "__main__":
