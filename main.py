@@ -76,7 +76,7 @@ async def _nick(ctx, name : str):
 
 
 _insult_brief='Random insult'
-_insult_desc='A command that insult you with a random insult.'
+_insult_desc='A command that insults you with a random insult.'
 @bot.command(name='insult', aliases=['bother', 'insult_me', 'curse'], brief=_insult_brief, description=_insult_desc)
 async def _insult(ctx):
   response = request.urlopen('https://evilinsult.com/generate_insult.php')
