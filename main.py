@@ -62,21 +62,21 @@ async def pre_check(ctx):
 
 
 _ping_brief='For dumbasses'
-_ping_desc='A command for you dumbass to have fun in your miserable life.'
+_ping_desc='A command for your dumbass to have fun in your miserable life.'
 @bot.command(name='ping', brief=_ping_brief, description=_ping_desc)
 async def _ping(ctx):
   await ctx.message.reply('Pong!')
 
 
 _nick_brief='Change nickname'
-_nick_desc='A command that changes your name to whatever you write after it.'
+_nick_desc='Changes your name to whatever you write after it.'
 @bot.command(name='nick', aliases=['nickname', 'name'], brief=_nick_brief, description=_nick_desc)
 async def _nick(ctx, name : str):
   await ctx.author.edit(nick=name)
 
 
 _insult_brief='Random insult'
-_insult_desc='A command that insults you with a random insult.'
+_insult_desc='Insults you with a random insult.'
 @bot.command(name='insult', aliases=['bother', 'insult_me', 'curse'], brief=_insult_brief, description=_insult_desc)
 async def _insult(ctx):
   random_insult = ''
@@ -89,7 +89,7 @@ async def _insult(ctx):
 
 
 _pin_brief='Pin last message'
-_pin_desc='Pins the last message of the channel that wasn\'t commented by the bot itself.'
+_pin_desc='Pins the last message of the channel that wasn\'t sent by the bot itself.'
 @bot.command(name='pin', brief=_pin_brief, description=_pin_desc)
 async def _pin(ctx):
   history=ctx.channel.history(limit=10)
@@ -99,7 +99,7 @@ async def _pin(ctx):
   if last_user_made_message:
     await last_user_made_message.pin()
   else:
-    await send_warning(ctx.message, 'Couldn\'t find any pinnable messages in last 10 entries.')
+    await send_warning(ctx.message, 'Couldn\'t find any pinnable messages in the last 10 entries.')
 
 
 if __name__ == '__main__':
