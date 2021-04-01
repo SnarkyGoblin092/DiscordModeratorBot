@@ -21,7 +21,7 @@ async def send_warning(message, title, description):
     ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description))
   warning = discord.Embed(title='Warning!', description=formatted_description, color = 0xff0000)
   
-  await message.channel.send(embed=warning)
+  await message.reply(embed=warning)
 
 
 @bot.event
@@ -65,7 +65,7 @@ _ping_brief='For dumbasses'
 _ping_desc='A command for you dumbass to have fun in your miserable life.'
 @bot.command(name='ping', brief=_ping_brief, description=_ping_desc)
 async def _ping(ctx):
-  await ctx.send('Pong!')
+  await ctx.message.reply('Pong!')
 
 
 _nick_brief='Change nickname'
@@ -85,7 +85,7 @@ async def _insult(ctx):
     response = request.urlopen('https://evilinsult.com/generate_insult.php')
     random_insult = response.read().decode('UTF-8')
   
-  await ctx.send(random_insult)
+  await ctx.message.reply(random_insult)
 
 
 _pin_brief='Pin last message'
