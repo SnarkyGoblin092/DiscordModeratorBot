@@ -1,7 +1,7 @@
+#!/usr/bin/python3
 import discord
 import os
 import keep_alive
-import asyncio
 from discord.ext import commands
 from discord.ext.commands import errors
 from pretty_help import PrettyHelp
@@ -17,14 +17,13 @@ bot = commands.Bot(command_prefix='$', help_command=PrettyHelp(), description=de
 
 
 async def send_warning(message, title, description):
-  formatted_description = ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description)
+  formatted_description = (
+    ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description))
   warning = discord.Embed(title='Warning!', description=formatted_description, color = 0xff0000)
   
   await message.delete()
-  msg = await message.channel.send(embed=warning)
-  await asyncio.sleep(10)
-  await msg.delete()
-  
+  await message.channel.send(embed=warning, delete_after=10)
+
 
 @bot.event
 async def on_ready():
@@ -41,7 +40,7 @@ async def on_command_error(ctx, exception):
 
 @bot.listen()
 async def on_message(message):
-  if not message.channel.name == "music":
+  if not message.channel.name == 'music':
     if message.content.startswith(tuple(music_commands.commands)):
       music_bot = bot.get_user(235088799074484224)
       ch_music = bot.get_channel(821946547767345152)
@@ -52,7 +51,7 @@ async def on_message(message):
 
 @bot.check
 async def pre_check(ctx):
-  if ctx.channel.name == "commands" or ctx.channel.name == "bot-test":
+  if ctx.channel.name == 'commands' or ctx.channel.name == 'bot-test':
     return True
   ch_commands = bot.get_channel(821759044905074698)
   ch_bot_test = bot.get_channel(821714897582161940)
@@ -63,9 +62,9 @@ async def pre_check(ctx):
 
 _ping_brief='For dumbasses'
 _ping_desc='A command for you dumbass to have fun in your miserable life.'
-@bot.command(name="ping", brief=_ping_brief, description=_ping_desc)
+@bot.command(name='ping', brief=_ping_brief, description=_ping_desc)
 async def _ping(ctx):
-  await ctx.send("Pong!")
+  await ctx.send('Pong!')
 
 
 _nick_brief='Change nickname'
@@ -79,8 +78,8 @@ _insult_brief='Random insult'
 _insult_desc='A command that insults you with a random insult.'
 @bot.command(name='insult', aliases=['bother', 'insult_me', 'curse'], brief=_insult_brief, description=_insult_desc)
 async def _insult(ctx):
-  random_insult = ""
-  # Denote the long time the request takes by "typing" to the channel
+  random_insult = ''
+  # Denote the long time the request takes by 'typing' to the channel
   async with ctx.typing():
     response = request.urlopen('https://evilinsult.com/generate_insult.php')
     random_insult = response.read().decode('UTF-8')
@@ -88,9 +87,9 @@ async def _insult(ctx):
   await ctx.send(random_insult)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   # keeps the bot running
   keep_alive.keep_alive()
 
   # starts the bot
-  bot.run(os.getenv("TOKEN"))
+  bot.run(os.getenv('TOKEN'))
