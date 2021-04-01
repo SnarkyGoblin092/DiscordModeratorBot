@@ -2,6 +2,7 @@
 import discord
 import os
 import keep_alive
+import asyncio
 from discord.ext import commands
 from discord.ext.commands import errors
 from pretty_help import PrettyHelp
@@ -20,8 +21,10 @@ async def send_warning(message, title, description):
   formatted_description = (
     ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description))
   warning = discord.Embed(title='Warning!', description=formatted_description, color = 0xff0000)
-  
-  await message.reply(embed=warning)
+
+  await message.reply(embed=warning, delete_after=15)
+  await asyncio.sleep(15)
+  await message.delete()
 
 
 @bot.event
