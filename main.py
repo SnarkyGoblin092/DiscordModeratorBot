@@ -79,8 +79,12 @@ _insult_brief='Random insult'
 _insult_desc='A command that insults you with a random insult.'
 @bot.command(name='insult', aliases=['bother', 'insult_me', 'curse'], brief=_insult_brief, description=_insult_desc)
 async def _insult(ctx):
-  response = request.urlopen('https://evilinsult.com/generate_insult.php')
-  random_insult = response.read().decode('UTF-8')
+  random_insult = ""
+  # Denote the long time the request takes by "typing" to the channel
+  async with ctx.typing():
+    response = request.urlopen('https://evilinsult.com/generate_insult.php')
+    random_insult = response.read().decode('UTF-8')
+  
   await ctx.send(random_insult)
 
 
