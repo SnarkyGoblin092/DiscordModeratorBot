@@ -1,87 +1,99 @@
 import discord
 import os
 import keep_alive
-import asyncio
-from discord.ext import commands
-from discord.ext.commands import errors
-from pretty_help import PrettyHelp
-from urllib import request
-import music_commands
+import features
+from commands import commands_data
 
-description = 'A moderator bot for your server.'
-
-intents = discord.Intents.default()
-intents.members = True
-
-bot = commands.Bot(command_prefix='$', help_command=PrettyHelp(), description=description, intents=intents)
+# creates the bot
+client = discord.Client()
 
 
-async def send_warning(message, title, description):
-  formatted_description = ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description)
-  warning = discord.Embed(title='Warning!', description=formatted_description, color = 0xff0000)
-  
+# checks if message starts with a command and returns the required role, 
+# the command and the commands usage
+def check_commands(message):
+  for role, command_list in commands_data.items():
+    for command, usage in command_list.items():
+      if message.startswith(command):
+        return [role, command, usage]
+  return ["", "", ""]
+
+
+# sends a warning when a command was used in the wrong channel
+async def send_wrong_channel_warning(channel, author, message, role):
+  embed_message = ""
+  if role.name == "DJ":
+    embed_message = discord.Embed(title="Figyelmeztetés!", description=":no_entry_sign:   **Rossz csatorna!**\n\nA {0.mention} joghoz tartozó parancsokat csak a {1.mention}-ban használhatod!".format(role, channel), color = 0xff0000)
+  else:
+    embed_message = discord.Embed(title="Figyelmeztetés!", description=":no_entry_sign:   **Rossz csatorna!**\n\nParancsokat csak a {0.mention}-ban használhatsz!".format(channel), color = 0xff0000)
+  embed_message.set_author(name=author.display_name, icon_url=author.avatar_url)
   await message.delete()
-  msg = await message.channel.send(embed=warning)
-  await asyncio.sleep(10)
-  await msg.delete()
-  
+  await message.channel.send(embed=embed_message)
 
-@bot.event
+
+# sends a warning when a command is used without permission
+async def send_permission_warning(channel, author, message, role, command):
+  embed_message = discord.Embed(title="Figyelmeztetés!", description=":no_entry_sign:   **Nincs jogod ehhez a parancshoz:** {0}\nSzükséges jog: {1}".format("`{}`".format(command), role.mention), color = 0xff0000)
+  embed_message.set_author(name = author.display_name, icon_url=author.avatar_url)
+  await message.delete()
+  await channel.send(embed=embed_message)
+
+
+# sends a warning that includes the usage of the used command when the command syntax is incorrect
+async def send_use_warning(channel, author, message, role, command):
+  usage = commands_data[role.name][command]
+  title = "Figyelmeztetés!"
+  description = ":x:   **Helytelen használat!**\n\n{0}".format(usage)
+  embed_msg = discord.Embed(title=title, description=description, color=0xff9f21)
+  embed_msg.set_author(name=author.display_name, icon_url=author.avatar_url)
+  await message.delete()
+  await channel.send(embed=embed_msg)
+
+
+# updates the avatar of the bot
+@client.event
 async def on_ready():
-  print('Logged in as', bot.user)
+  print("We have logged in as {0.user}".format(client))
+  with open("moderator.gif", "rb") as img:
+    b = img.read()
+  await client.user.edit(avatar=b)
 
 
-@bot.event
-async def on_command_error(ctx, exception):
-  if type(exception) == errors.CommandNotFound:
-    title = 'Unknown command!'
-    description = 'The given command could not be found.'
-    await send_warning(ctx.message, title, description)
-
-
-@bot.listen()
+# runs when a message is sent on the server
+@client.event
 async def on_message(message):
-  if not message.channel.name == "music":
-    if message.content.startswith(tuple(music_commands.commands)):
-      music_bot = bot.get_user(235088799074484224)
-      ch_music = bot.get_channel(821946547767345152)
-      title = 'Wrong channel!'
-      description = 'You can only use {0.mention}\'s command in {1.mention}.'.format(music_bot, ch_music)
-      await send_warning(message, title, description)
-      
+  msg = message.content
+  msg_author = message.author
+  msg_channel = message.channel
 
-@bot.check
-async def pre_check(ctx):
-  if ctx.channel.name == "commands" or ctx.channel.name == "bot-test":
-    return True
-  ch_commands = bot.get_channel(821759044905074698)
-  ch_bot_test = bot.get_channel(821714897582161940)
-  title = 'Wrong channel!'
-  description = 'You can only use commands in {0.mention} and {1.mention}.'.format(ch_commands, ch_bot_test)
-  await send_warning(ctx.message, title, description)
+  # checks if the sender is the bot
+  if msg_author == client.user:
+    return
 
+  # stores the channels used in the code
+  commands_channel = client.get_channel(821759044905074698)
+  music_channel = client.get_channel(821946547767345152)
+  bot_log_channel = client.get_channel(821967330661498931)
 
-_ping_brief='For dumbasses'
-_ping_desc='A command for you dumbass to have fun in your miserable life.'
-@bot.command(name="ping", brief=_ping_brief, description=_ping_desc)
-async def _ping(ctx):
-  await ctx.send("Pong!")
+  # manages the commands users try to run
+  role_name, command, usage = check_commands(msg)
+  if command:
+    role = discord.utils.get(message.guild.roles, name=role_name)
+    if not role in msg_author.roles:
+      await send_permission_warning(msg_channel, msg_author, message, role, command)
+      return
 
-
-_nick_brief='Change nickname'
-_nick_desc='A command that changes your name to whatever you write after it.'
-@bot.command(name='nick', aliases=['nickname', 'name'], brief=_nick_brief, description=_nick_desc)
-async def _nick(ctx, name : str):
-  await ctx.author.edit(nick=name)
-
-
-_insult_brief='Random insult'
-_insult_desc='A command that insult you with a random insult.'
-@bot.command(name='insult', aliases=['bother', 'insult_me', 'curse'], brief=_insult_brief, description=_insult_desc)
-async def _insult(ctx):
-  response = request.urlopen('https://evilinsult.com/generate_insult.php')
-  random_insult = response.read().decode('UTF-8')
-  await ctx.send(random_insult)
+    dj_commands = commands_data["DJ"].keys()
+    if command in dj_commands and not msg_channel.name == "music":
+      await send_wrong_channel_warning(music_channel, msg_author, message, role)
+    elif msg_channel.name == "commands" or msg_channel.name == "bot-test":
+      if not msg.split(command, 1)[1]:
+        await send_use_warning(msg_channel, msg_author, message, role, command)
+        return
+      log_msg = "{0.mention} used `{1}`".format(msg_author, msg)
+      await bot_log_channel.send(log_msg)
+      await features.call_function(msg_channel, msg_author, msg, command, role)
+    else:
+      await send_wrong_channel_warning(commands_channel, msg_author, message, role)
 
 
 if __name__ == "__main__":
@@ -89,4 +101,4 @@ if __name__ == "__main__":
   keep_alive.keep_alive()
 
   # starts the bot
-  bot.run(os.getenv("TOKEN"))
+  client.run(os.getenv("TOKEN"))
