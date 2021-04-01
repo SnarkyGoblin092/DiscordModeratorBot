@@ -21,8 +21,7 @@ async def send_warning(message, title, description):
     ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description))
   warning = discord.Embed(title='Warning!', description=formatted_description, color = 0xff0000)
   
-  await message.delete()
-  await message.channel.send(embed=warning, delete_after=10)
+  await message.channel.send(embed=warning)
 
 
 @bot.event
@@ -46,8 +45,9 @@ async def on_message(message):
       ch_music = bot.get_channel(821946547767345152)
       title = 'Wrong channel!'
       description = 'You can only use {0.mention}\'s command in {1.mention}.'.format(music_bot, ch_music)
-      await send_warning(message, title, description)
       
+      await send_warning(message, title, description)
+
 
 @bot.check
 async def pre_check(ctx):
@@ -57,6 +57,7 @@ async def pre_check(ctx):
   ch_bot_test = bot.get_channel(821714897582161940)
   title = 'Wrong channel!'
   description = 'You can only use commands in {0.mention} and {1.mention}.'.format(ch_commands, ch_bot_test)
+  
   await send_warning(ctx.message, title, description)
 
 
@@ -85,6 +86,20 @@ async def _insult(ctx):
     random_insult = response.read().decode('UTF-8')
   
   await ctx.send(random_insult)
+
+
+_pin_brief='Pin last message'
+_pin_desc='Pins the last message of the channel that wasn\'t commented by the bot itself.'
+@bot.command(name='pin', brief=_pin_brief, description=_pin_desc)
+async def _pin(ctx):
+  history=ctx.channel.history(limit=10)
+  predicate = lambda message: not message == ctx.message and not message.author == bot.user
+  last_user_made_message = await history.find(predicate)
+
+  if last_user_made_message:
+    await last_user_made_message.pin()
+  else:
+    await send_warning(ctx.message, 'Couldn\'t find any pinnable messages in last 10 entries.')
 
 
 if __name__ == '__main__':
