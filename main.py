@@ -19,7 +19,6 @@ bot = commands.Bot(command_prefix='$', help_command=PrettyHelp(), description=de
 
 # bots
 music_bot = None
-
 # channels
 ch_music = None
 ch_log = None
@@ -66,8 +65,6 @@ def extract_args(ctx):
 
 @bot.event
 async def on_ready():
-  print('Logged in as', bot.user)
-
   global music_bot
   global ch_music
   global ch_log
@@ -79,6 +76,9 @@ async def on_ready():
   ch_log = bot.get_channel(827374735830286347)
   ch_commands = bot.get_channel(827374609234001970)
   ch_bot_test = bot.get_channel(827374679928471592)
+
+  print('Logged in as', bot.user)
+  await ch_log.send(f'{bot.user.mention} is online! :vulcan:')
 
 
 @bot.event
@@ -102,7 +102,7 @@ async def on_message(message):
 
 
 @bot.listen()
-async def on_command(ctx):
+async def on_command_completion(ctx):
   user = ctx.author
   command = ctx.command
   channel = ctx.channel
@@ -175,16 +175,10 @@ async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : in
   if not channel:
     channel = ctx.channel
 
-  if channel is ch_log:
-    count += 1
-
-  i = 0
   history=channel.history(limit=count, oldest_first=False)
   async for message in history:
-    if channel is ch_log and i == 0:
-      i += 1
-    else:
       await message.delete()
+
 
 if __name__ == '__main__':
   # keeps the bot running
