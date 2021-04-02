@@ -52,6 +52,9 @@ def extract_args(ctx):
   args = ''
   for arg in ctx.args:
     if not arg is ctx.args[0]:
+      if not arg:
+        continue
+        
       if isinstance(arg, discord.TextChannel):
         args += f'#{arg} '
       elif isinstance(arg, discord.User):
@@ -106,7 +109,8 @@ async def on_command_completion(ctx):
   user = ctx.author
   command = ctx.command
   channel = ctx.channel
-  log_msg = f'{user.mention} used in {channel.mention}```${command} {extract_args(ctx).strip()}```'
+  args = extract_args(ctx).strip()
+  log_msg = f'{user.mention} used in {channel.mention}```${command} {args}```'
   embed = discord.Embed(description=log_msg)
 
   await ch_log.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
