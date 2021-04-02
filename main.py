@@ -92,7 +92,7 @@ async def on_command_error(ctx, exception):
     await send_warning(ctx.message, 'Notice!', title, description)
   elif isinstance(exception, discord.ext.commands.BadArgument):
     await send_command_usage(ctx)
-    
+
 
 @bot.listen()
 async def on_message(message):
@@ -126,24 +126,22 @@ async def pre_check(ctx):
   await send_warning(ctx.message, 'Warning!', title, description)
 
 
-_ping_brief='For dumbasses'
-_ping_desc='A command for your dumbass to have fun in your miserable life.'
-@bot.command(name='ping', brief=_ping_brief, description=_ping_desc)
+@bot.command(name='ping')
 async def _ping(ctx):
+  'Replies with "Pong".'
   await ctx.message.reply('Pong!')
 
 
-_nick_brief='Change nickname'
-_nick_desc='Changes your name to whatever you write after it.'
-@bot.command(name='nick', aliases=['nickname', 'name'], brief=_nick_brief, description=_nick_desc)
+@bot.command(name='nick', aliases=['nickname', 'name'])
 async def _nick(ctx, name : str):
+  'Changes your name to whatever you want.'
   await ctx.author.edit(nick=name)
 
 
-_insult_brief='Random insult'
-_insult_desc='Insults you with a random insult.'
-@bot.command(name='insult', aliases=['bother', 'curse'], brief=_insult_brief, description=_insult_desc)
+@bot.command(name='insult', aliases=['bother', 'curse'])
 async def _insult(ctx, target_user : discord.User = None):
+  'Insults you or somebody else with a random insult.'
+
   if not target_user:
     target_user = ctx.author
 
@@ -156,10 +154,9 @@ async def _insult(ctx, target_user : discord.User = None):
   await ctx.send("{0.mention} {1}".format(target_user, random_insult))
 
 
-_pin_brief='Pin last message'
-_pin_desc='Pins the last message of the channel that wasn\'t sent by the bot itself.'
-@bot.command(name='pin', brief=_pin_brief, description=_pin_desc)
+@bot.command(name='pin')
 async def _pin(ctx):
+  'Pins the last message of the channel that wasn\'t sent by the bot itself.'
   history=ctx.channel.history(limit=10)
   predicate = lambda message: not message.content.startswith(bot.command_prefix) and not message.author == bot.user
   last_user_made_message = await history.find(predicate)
@@ -170,12 +167,10 @@ async def _pin(ctx):
     await send_warning(ctx.message, 'Notice!', '', 'Couldn\'t find any pinnable messages in the last 10 entries.')
 
 
-_clear_brief='Erases messages'
-_clear_desc='Deletes past messages based on given number.'
-@bot.command(name='clear', aliases=['erase', 'clean'], brief=_clear_brief, description=_clear_desc)
+@bot.command(name='clear', aliases=['erase', 'clean'])
 async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : int = 1):
+  'Deletes past messages based on given number.'
   await ctx.message.delete()
-  
   if not channel:
     channel = ctx.channel
 
