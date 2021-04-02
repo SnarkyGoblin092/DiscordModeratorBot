@@ -8,6 +8,7 @@ authors = ["Replit user <replituser@example.com>"]
 python = "^3.8"
 discord = "^1.0.1"
 flask = "^1.1.2"
+discord-pretty-help = "^1.2.3"
 
 [tool.poetry.dev-dependencies]
 

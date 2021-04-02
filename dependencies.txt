@@ -1,3 +1,0 @@
-discord
-discord-pretty-help
-Flask
