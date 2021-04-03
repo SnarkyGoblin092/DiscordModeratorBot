@@ -138,8 +138,8 @@ async def _ping(ctx):
 
 
 @bot.command(name='nick', aliases=['nickname', 'name'])
-async def _nick(ctx, *, name : str = None):
-  'Changes your name to whatever you want.'
+async def _nick(ctx, name : str = None):
+  'Changes your name to whatever you want. You cannot have spaces in your name!'
   if not name == None: 
     await ctx.author.edit(nick=name)
   else:
@@ -147,7 +147,7 @@ async def _nick(ctx, *, name : str = None):
     
 
 @bot.command(name='insult', aliases=['bother', 'curse'])
-async def _insult(ctx, *, target_user : discord.User = None):
+async def _insult(ctx, target_user : discord.User = None):
   'Insults you or somebody else with a random insult.'
 
   if not target_user:
@@ -176,7 +176,7 @@ async def _pin(ctx):
 
 
 @bot.command(name='clear', aliases=['erase', 'clean'])
-async def _clear(ctx, channel : typing.Optional[discord.TextChannel], *, count : int = 1):
+async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : int = 1):
   'Deletes past messages based on given number.'
   
   await ctx.message.delete()
