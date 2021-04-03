@@ -30,8 +30,8 @@ async def send_warning(message, warning_type, title, description):
   formatted_description = ':no_entry_sign:   **{0}**\n\n{1}'.format(title, description)
   warning = discord.Embed(title=warning_type, description=formatted_description, color = 0xff0000)
 
-  await message.reply(embed=warning, delete_after=15)
-  await asyncio.sleep(15)
+  await message.reply(embed=warning, delete_after=5)
+  await asyncio.sleep(5)
   await message.delete()
 
 
@@ -45,7 +45,7 @@ async def send_command_usage(ctx):
   embed = discord.Embed(title=ctx.command.name)
   embed.add_field(name='Usage', value=usage, inline=True)
   await ctx.message.delete()
-  await ctx.send(embed=embed, delete_after=20)
+  await ctx.send(embed=embed, delete_after=15)
 
 
 def extract_args(ctx):
@@ -92,16 +92,25 @@ async def on_command_error(ctx, exception):
     await send_warning(ctx.message, 'Notice!', title, description)
   elif isinstance(exception, discord.ext.commands.BadArgument):
     await send_command_usage(ctx)
+  else:
+    print(exception)
 
 
 @bot.listen()
 async def on_message(message):
-  if not message.channel is ch_music:
-    if message.content.startswith(tuple(music_commands.commands)):
-      title = 'Wrong channel!'
-      description = 'You can only use {0.mention}\'s command in {1.mention}.'.format(music_bot, ch_music)
+  if not message.author.bot:
+    music_command = message.content.startswith(tuple(music_commands.commands))
+    if not message.channel is ch_music:
+      if music_command:
+        title = 'Wrong channel!'
+        description = 'You can only use {0.mention}\'s command in {1.mention}.'.format(music_bot, ch_music)
 
-      await send_warning(message, 'Warning!', title, description)
+        await send_warning(message, 'Warning!', title, description)
+    else:
+      if not music_command:
+        title = 'Prohibited!'
+        description = f'You can only send {music_bot.mention}\'s commands in this channel.'
+        await send_warning(message, 'Warning!', title, description)  
 
 
 @bot.listen()
@@ -110,7 +119,7 @@ async def on_command_completion(ctx):
   command = ctx.command
   channel = ctx.channel
   args = extract_args(ctx).strip()
-  log_msg = f'{user.mention} used in {channel.mention}```${command} {args}```'
+  log_msg = f'{user.mention} used in {channel.mention}```${command} {args}```'.strip()
   embed = discord.Embed(description=log_msg)
 
   await ch_log.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
@@ -118,28 +127,27 @@ async def on_command_completion(ctx):
 
 @bot.check
 async def pre_check(ctx):
-  if ctx.channel is ch_commands or ctx.channel is ch_bot_test:
+  if not ctx.channel is ch_music:
     return True
-  title = 'Wrong channel!'
-  description = 'You can only use commands in {0.mention} and {1.mention}.'.format(ch_commands, ch_bot_test)
-  
-  await send_warning(ctx.message, 'Warning!', title, description)
 
 
 @bot.command(name='ping')
 async def _ping(ctx):
-  'Replies with "Pong".'
+  'Replies with "Pong!".'
   await ctx.message.reply('Pong!')
 
 
 @bot.command(name='nick', aliases=['nickname', 'name'])
-async def _nick(ctx, name : str):
+async def _nick(ctx, *, name : str = None):
   'Changes your name to whatever you want.'
-  await ctx.author.edit(nick=name)
-
+  if not name == None: 
+    await ctx.author.edit(nick=name)
+  else:
+    await send_command_usage(ctx)
+    
 
 @bot.command(name='insult', aliases=['bother', 'curse'])
-async def _insult(ctx, target_user : discord.User = None):
+async def _insult(ctx, *, target_user : discord.User = None):
   'Insults you or somebody else with a random insult.'
 
   if not target_user:
@@ -168,12 +176,13 @@ async def _pin(ctx):
 
 
 @bot.command(name='clear', aliases=['erase', 'clean'])
-async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : int = 1):
+async def _clear(ctx, channel : typing.Optional[discord.TextChannel], *, count : int = 1):
   'Deletes past messages based on given number.'
+  
   await ctx.message.delete()
   if not channel:
     channel = ctx.channel
-
+    
   history=channel.history(limit=count, oldest_first=False)
   async for message in history:
       await message.delete()
