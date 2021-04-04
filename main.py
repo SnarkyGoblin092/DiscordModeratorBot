@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import discord
 import os
-import keep_alive
 import typing
 import asyncio
 from discord.ext import commands
@@ -189,7 +188,5 @@ async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : in
 
 
 if __name__ == '__main__':
-  # keeps the bot running
-  keep_alive.keep_alive()
   # starts the bot
   bot.run(os.getenv('TOKEN'))
