@@ -1,5 +1,6 @@
 # Stores the music commands of Rythm
-commands = [
+command_prefix = '!'
+commands = (
   '!join',
   '!summon',
   '!fuckon',
@@ -102,4 +103,4 @@ commands = [
   '!debug',
   '!ping',
   '!aliases'
-]
+)

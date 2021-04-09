@@ -1,3 +1,4 @@
 discord >= 1.0.1
 discord-pretty-help >= 1.2.3
 pydotenv >= 0.0.7
+aiohttp >= 3.7.4
