@@ -143,12 +143,14 @@ async def _ping(ctx):
 
 @bot.command(name='nick', aliases=['nickname', 'name'])
 async def _nick(ctx, name : str = None):
-  'Changes your name to whatever you want. You cannot have spaces in your name!'
-  if name: 
-    await ctx.author.edit(nick=name)
+  'Changes your name to whatever you want. No spaces allowed! Don\'t give any parameters to reset your name.'
+  await ctx.author.edit(nick=name)
+
+  if name:
+    msg = 'Nickname set!'
   else:
-    await send_command_usage(reply_to=ctx.message, command=ctx.command, delete_after=10)
-    await ctx.message.delete(delay=10)
+    msg = 'Nickname cleared!'
+  await ctx.reply(msg)
 
 
 @bot.command(name='insult', aliases=['bother', 'curse'])
@@ -163,7 +165,7 @@ async def _insult(ctx, target_user : discord.User = None):
     random_insult = await get_random_insult()
 
   msg = f'{target_user.mention} {random_insult}'
-  await ctx.message.reply(msg)
+  await ctx.reply(msg)
 
 
 @bot.command(name='pin')
