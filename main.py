@@ -27,6 +27,10 @@ class WrongChannelError(commands.CommandError):
   'Raised when the user wants to run a command in the channel of music bot.'
   pass
 
+class InsultAPIError(Exception):
+  'Raised when the Evil Insult API having issues.'
+  pass
+
 
 async def send_warning(reply_to, title, sub_title, description, delete_after=None):
   'Sends a custom warning by replying to a message.'
@@ -52,6 +56,9 @@ async def get_random_insult():
   'Gets a random insult asynchronously using the EvilInsult API'
   async with aiohttp.ClientSession() as session:
     async with session.get('https://evilinsult.com/generate_insult.php') as response:
+      if not response.status == 200:
+        raise InsultAPIError
+
       return await response.text()
 
 
@@ -160,12 +167,19 @@ async def _insult(ctx, target_user : discord.User = None):
   if not target_user:
     target_user = ctx.author
 
-  # Denote the time consuming request by 'typing' to the channel
-  async with ctx.typing():
-    random_insult = await get_random_insult()
+  try:
+    # Denote the time consuming request by 'typing' to the channel
+    async with ctx.typing():
+      random_insult = await get_random_insult()
+    msg = f'{target_user.mention} {random_insult}'
+    await ctx.reply(msg)
 
-  msg = f'{target_user.mention} {random_insult}'
-  await ctx.reply(msg)
+  except InsultAPIError:
+    title='Error!'
+    sub_title='Insult API error!'
+    description='Seems like the insult API having issues right now! Try again later.'
+    await send_warning(reply_to=ctx.message, title=title, sub_title=sub_title, description=description, delete_after=10)
+    await ctx.message.delete(delay=10)
 
 
 @bot.command(name='pin')
