@@ -3,24 +3,15 @@ import discord
 import os
 import typing
 import aiohttp
-from discord.ext import commands
+from discord.ext import commands, tasks
 from pretty_help import PrettyHelp
 import music_commands
+import forum_scraper
 
 description = 'A moderator bot for your server.'
-
 intents = discord.Intents.default()
 intents.members = True
-
 bot = commands.Bot(command_prefix='$', help_command=PrettyHelp(), description=description, intents=intents)
-
-# bots
-music_bot = None
-# channels
-ch_music = None
-ch_log = None
-ch_commands = None
-ch_bot_test = None
 
 
 class WrongChannelError(commands.CommandError):
@@ -62,6 +53,31 @@ async def get_random_insult():
       return await response.text()
 
 
+@tasks.loop(minutes=1)
+async def task_dealwatch():
+  try:
+    with open('forum_scraper_last_message_id.txt', 'r') as f:
+      last_message_id = int(f.readline())
+  except (FileNotFoundError, ValueError):
+    with open('forum_scraper_last_message_id.txt', 'w') as f:
+      last_message_id = 84239 # A high default value
+      f.write(str(last_message_id))
+  
+  messages = await forum_scraper.scrape_recursively(from_message_id=last_message_id+1)
+  if messages:
+    deals_only_messages = filter(lambda m: m.has_deals, messages)
+    for message in deals_only_messages:
+      msg = (
+        f'#{message.id} {message.author_nick}\n'
+        f'{message.text}\n'
+      )
+      await ch_dealwatch.send(msg)
+
+    last_message_id = messages[-1].id
+    with open('forum_scraper_last_message_id.txt', 'w') as f:
+      f.write(str(last_message_id))
+
+
 @bot.event
 async def on_ready():
   global music_bot
@@ -69,12 +85,16 @@ async def on_ready():
   global ch_log
   global ch_commands
   global ch_bot_test
+  global ch_dealwatch
 
   music_bot = bot.get_user(235088799074484224)
   ch_music = bot.get_channel(821946547767345152)
   ch_log = bot.get_channel(827374735830286347)
   ch_commands = bot.get_channel(827374609234001970)
   ch_bot_test = bot.get_channel(827374679928471592)
+  ch_dealwatch = bot.get_channel(832438420672086066)
+
+  task_dealwatch.start()
 
   print('Logged in as', bot.user, flush=True)
   await ch_log.send(f'{bot.user.mention} is online! :vulcan:')
