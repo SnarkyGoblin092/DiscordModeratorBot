@@ -19,11 +19,14 @@ class ForumMessage():
     self.has_deals = ('#akció' in text_lower) or ('#akcio' in text_lower)
 
 
-def convert_children_link_tags_to_raw_links(parent):
-  r"Replaces the parent tag's children \<a\> tags to its' href attribute's value."
+def convert_children_link_tags_to_discord_links(parent):
+  r"Converts the tag's children \<a\> tags to discord embed link format."
   for a in parent.find_all('a', href=True):
     href = a['href']
-    a.replace_with(href) 
+    text = a.get_text(strip=True)
+
+    dc_link = f'[{text}]({href})'
+    a.replace_with(dc_link) 
 
 
 async def request_webpage_src(from_message_id:int) -> str:
@@ -53,7 +56,7 @@ async def scrape(from_message_id):
     datetime    = date_tag.get_text(strip=True)
     author_nick = author_nick_tag.get_text(strip=True)
 
-    convert_children_link_tags_to_raw_links(text_tag)
+    convert_children_link_tags_to_discord_links(text_tag)
     text = text_tag.get_text(separator='\n', strip=True)
 
     data_scraped.append(ForumMessage(id, datetime, author_nick, text))
