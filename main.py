@@ -3,6 +3,8 @@ import discord
 import os
 import typing
 import aiohttp
+import tempfile
+from pathlib import Path
 from discord.ext import commands, tasks
 from pretty_help import PrettyHelp
 import music_commands
@@ -12,6 +14,7 @@ description = 'A moderator bot for your server.'
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='$', help_command=PrettyHelp(), description=description, intents=intents)
+run_indicator = Path(f'{tempfile.gettempdir()}/dc_moderator_bot')
 
 
 class WrongChannelError(commands.CommandError):
@@ -100,7 +103,11 @@ async def on_ready():
     task_dealwatch.start()
 
     print('Logged in as', bot.user, flush=True)
-    await ch_log.send(f'{bot.user.mention} is online! :vulcan:')
+    if run_indicator.exists():
+        await ch_log.send('I crashed into a tree... :worried: But I\'m back!')    
+    else:
+        await ch_log.send('I\'m fresh and back in business! :vulcan:')
+        run_indicator.touch()
 
 
 @bot.listen()
@@ -236,6 +243,18 @@ async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : in
     await ctx.send(msg, delete_after=10)
 
 
+async def quit():
+    await ch_log.send('Imma\' head out! :v:')
+    run_indicator.unlink(missing_ok=True)
+
+
 if __name__ == '__main__':
     # starts the bot
-    bot.run(os.getenv('TOKEN'))
+    loop = bot.loop
+
+    try:
+        loop.run_until_complete(bot.start(os.getenv('TOKEN')))
+    except KeyboardInterrupt:
+        loop.run_until_complete(quit())
+    finally:
+        loop.close()
