@@ -63,7 +63,12 @@ async def task_dealwatch():
       last_message_id = 84239 # A high default value
       f.write(str(last_message_id))
   
-  messages = await forum_scraper.scrape_recursively(from_message_id=last_message_id+1)
+  try:
+    messages = await forum_scraper.scrape_recursively(from_message_id=last_message_id+1)
+  except forum_scraper.NetworkErrorDuringScraping:
+    print('Network error occured during web scraping. task_dealwatch is skipping one iteration now...')
+    return
+
   if messages:
     deals_only_messages = filter(lambda m: m.has_deals, messages)
     for message in deals_only_messages:

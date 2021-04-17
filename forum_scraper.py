@@ -72,8 +72,4 @@ async def scrape_recursively(from_message_id):
   
   # else just return the data we scraped
   return tuple(data)
-
-
-class ScrapeHelper():
-  def __init__(self):
-    pass
+  
