@@ -3,6 +3,8 @@ import aiohttp
 import time
 from bs4 import BeautifulSoup
 
+request_webpage_session = aiohttp.ClientSession()
+
 class NetworkErrorDuringScraping(Exception):
     'Raised when a network error happen during scraping.'
 
@@ -32,28 +34,27 @@ def convert_children_link_tags_to_discord_links(parent):
 async def request_webpage_src(from_message_id:int) -> str:
     'Requests the webpage from the given message id. Returns a string of the webpage source it gets.'
     topic_url = f'https://prohardver.hu/tema/bestbuy_topik_akcio_ajanlasakor_akcio_hashtag_kote/hsz_{from_message_id}-{from_message_id+199}.html'
-    async with aiohttp.ClientSession() as session:
-        async with session.get(topic_url) as response:
-            if not response.status == 200:
-                raise NetworkErrorDuringScraping
+    async with request_webpage_session.get(topic_url) as response:
+        if not response.status == 200:
+            raise NetworkErrorDuringScraping
 
-            return await response.text()
+        return await response.text()
 
 
 async def scrape(from_message_id):
     webpage_src = await request_webpage_src(from_message_id=from_message_id)
     bs = BeautifulSoup(webpage_src, 'html.parser')
 
-    page_center = bs.find(name='div', id='center')
-    message_id_tags = page_center.select('div.msg-list:not(.thread-content) div.card div.card-header span.msg-head-author > span.msg-num a')
-    date_tags = page_center.select('div.msg-list:not(.thread-content) div.card div.card-header time')
+    page_center      = bs.find(name='div', id='center')
+    message_id_tags  = page_center.select('div.msg-list:not(.thread-content) div.card div.card-header span.msg-head-author > span.msg-num a')
+    date_tags        = page_center.select('div.msg-list:not(.thread-content) div.card div.card-header time')
     author_nick_tags = page_center.select('div.msg-list:not(.thread-content) div.card div.card-body > div.msg-user p.user-title')
-    text_tags = page_center.select('div.msg-list:not(.thread-content) div.card div.card-body > div.media-body > div.msg-content')
+    text_tags        = page_center.select('div.msg-list:not(.thread-content) div.card div.card-body > div.media-body > div.msg-content')
 
     data_scraped = []
     for message_id_tag, date_tag, author_nick_tag, text_tag in zip(message_id_tags, date_tags, author_nick_tags, text_tags):
-        id = int(message_id_tag.get_text(strip=True)[1:]) # Slice out the '#' character
-        datetime = date_tag.get_text(strip=True)
+        id          = int(message_id_tag.get_text(strip=True)[1:]) # Slice out the '#' character
+        datetime    = date_tag.get_text(strip=True)
         author_nick = author_nick_tag.get_text(strip=True)
 
         convert_children_link_tags_to_discord_links(text_tag)

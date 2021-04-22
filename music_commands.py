@@ -1,6 +1,6 @@
 # Stores the music commands of Rythm
 command_prefix = '!'
-commands = (
+commands = frozenset({
   '!join',
   '!summon',
   '!fuckon',
@@ -103,4 +103,4 @@ commands = (
   '!debug',
   '!ping',
   '!aliases'
-)
+})
