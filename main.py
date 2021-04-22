@@ -4,11 +4,14 @@ import os
 import typing
 import aiohttp
 import tempfile
+import datetime
 from pathlib import Path
 from discord.ext import commands, tasks
 from pretty_help import PrettyHelp
 import music_commands
 import forum_scraper
+
+insult_api_session = aiohttp.ClientSession()
 
 description = 'A moderator bot for your server.'
 intents = discord.Intents.default()
@@ -48,12 +51,11 @@ async def send_command_usage(reply_to, command, delete_after=None):
 
 async def get_random_insult():
     'Gets a random insult asynchronously using the EvilInsult API'
-    async with aiohttp.ClientSession() as session:
-        async with session.get('https://evilinsult.com/generate_insult.php') as response:
-            if not response.status == 200:
-                raise InsultAPIError
+    async with insult_api_session.get('https://evilinsult.com/generate_insult.php') as response:
+        if not response.status == 200:
+            raise InsultAPIError
 
-            return await response.text()
+        return await response.text()
 
 
 @tasks.loop(minutes=1)
@@ -112,10 +114,12 @@ async def on_ready():
 
 @bot.listen()
 async def on_message(message):
-    if not message.content.startswith(music_commands.command_prefix) or message.author.bot:
+    author = message.author
+    command_str = message.content.partition(' ')[0]
+    if not command_str.startswith(music_commands.command_prefix) or author.bot:
         return
 
-    is_music_command = message.content.startswith(music_commands.commands)
+    is_music_command = command_str in music_commands.commands
     if is_music_command and not message.channel is ch_music:
         title = 'Warning!'
         sub_title = 'Wrong channel!'
@@ -230,14 +234,17 @@ async def _pin(ctx):
 
 @bot.command(name='clear', aliases=['erase', 'clean', 'purge'])
 async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : int = 1):
-    'Deletes past messages based on given number.'
+    'Deletes past messages based on given number. Cannot delete past 2 weeks.'
     if not channel:
         channel = ctx.channel
 
     async with ctx.typing():
         if channel is ctx.channel:
             await ctx.message.delete()
-        deleted_messages = await channel.purge(limit=count)
+
+        # Don't delete past two weeks
+        two_weeks_ago = datetime.datetime.utcnow() - datetime.timedelta(weeks=2)
+        deleted_messages = await channel.purge(limit=count, after=two_weeks_ago)
     
     msg = f'Deleted {len(deleted_messages)} entries!'
     await ctx.send(msg, delete_after=10)
