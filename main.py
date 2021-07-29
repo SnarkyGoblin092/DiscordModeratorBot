@@ -5,13 +5,13 @@ import typing
 import aiohttp
 import tempfile
 import datetime
+import textwrap
 from pathlib import Path
 from discord.ext import commands, tasks
 from pretty_help import PrettyHelp
 import music_commands
 import forum_scraper
 
-insult_api_session = aiohttp.ClientSession()
 
 description = 'A moderator bot for your server.'
 intents = discord.Intents.default()
@@ -51,11 +51,12 @@ async def send_command_usage(reply_to, command, delete_after=None):
 
 async def get_random_insult():
     'Gets a random insult asynchronously using the EvilInsult API'
-    async with insult_api_session.get('https://evilinsult.com/generate_insult.php') as response:
-        if not response.status == 200:
-            raise InsultAPIError
+    async with aiohttp.ClientSession() as client:
+        async with client.get('https://evilinsult.com/generate_insult.php') as response:
+            if not response.status == 200:
+                raise InsultAPIError
 
-        return await response.text()
+            return await response.text()
 
 
 @tasks.loop(minutes=1)
@@ -65,23 +66,28 @@ async def task_dealwatch():
             last_message_id = int(f.readline())
     except (FileNotFoundError, ValueError):
         with open('forum_scraper_last_message_id.txt', 'w') as f:
-            last_message_id = 84239 # A high default value
+            last_message_id = 90000 # A high default value
             f.write(str(last_message_id))
-    
+
     try:
-        messages = await forum_scraper.scrape_recursively(from_message_id=last_message_id+1)
+        forum_messages = await forum_scraper.scrape_recursively(from_message_id=last_message_id+1)
     except forum_scraper.NetworkErrorDuringScraping:
         print('Network error occured during web scraping. task_dealwatch is skipping one iteration now...')
         return
 
-    if messages:
-        deals_only_messages = filter(lambda m: m.has_deals, messages)
-        for message in deals_only_messages:
-            embed = discord.Embed(title=message.author_nick)
-            embed.add_field(name=message.datetime, value=message.text)
-            await ch_dealwatch.send(embed=embed)
 
-        last_message_id = messages[-1].id
+    if forum_messages:
+        # Using TextWrapper to limit the message size (DC allows the maximum of 2000 chars)
+        text_wrapper = textwrap.TextWrapper(width=1900, break_long_words=True)
+        for message in forum_messages:
+            cutted_text = text_wrapper.wrap(message.text)
+            # Send long messages in "chunks"
+            for chunk in cutted_text:
+                embed = discord.Embed(title=message.author_nick)
+                embed.add_field(name=message.datetime, value=chunk)
+                await ch_dealwatch.send(embed=embed)
+
+        last_message_id = forum_messages[-1].id
         with open('forum_scraper_last_message_id.txt', 'w') as f:
             f.write(str(last_message_id))
 

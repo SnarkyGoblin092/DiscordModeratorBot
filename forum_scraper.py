@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 import aiohttp
-import time
 from bs4 import BeautifulSoup
 
-request_webpage_session = aiohttp.ClientSession()
 
 class NetworkErrorDuringScraping(Exception):
     'Raised when a network error happen during scraping.'
@@ -16,12 +14,8 @@ class ForumMessage():
         self.author_nick = author_nick
         self.text = text
 
-        # Check if the text got deals in it
-        text_lower = text.lower()
-        self.has_deals = ('#akció' in text_lower) or ('#akcio' in text_lower)
 
-
-def convert_children_link_tags_to_discord_links(parent):
+def convert_html_link_tags_to_discord_links(parent):
     r"Converts the tag's children \<a\> tags to discord embed link format."
     for a in parent.find_all('a', href=True):
         href = a['href']
@@ -32,13 +26,14 @@ def convert_children_link_tags_to_discord_links(parent):
 
 
 async def request_webpage_src(from_message_id:int) -> str:
-    'Requests the webpage from the given message id. Returns a string of the webpage source it gets.'
+    'Returns the source code of the webpage. The displayed messages are requested from from_message_id + 199'
     topic_url = f'https://prohardver.hu/tema/bestbuy_topik_akcio_ajanlasakor_akcio_hashtag_kote/hsz_{from_message_id}-{from_message_id+199}.html'
-    async with request_webpage_session.get(topic_url) as response:
-        if not response.status == 200:
-            raise NetworkErrorDuringScraping
+    async with aiohttp.ClientSession() as client:
+        async with client.get(topic_url) as response:
+            if not response.status == 200:
+                raise NetworkErrorDuringScraping
 
-        return await response.text()
+            return await response.text()
 
 
 async def scrape(from_message_id):
@@ -53,12 +48,15 @@ async def scrape(from_message_id):
 
     data_scraped = []
     for message_id_tag, date_tag, author_nick_tag, text_tag in zip(message_id_tags, date_tags, author_nick_tags, text_tags):
+        convert_html_link_tags_to_discord_links(text_tag)
+        text = text_tag.get_text(separator='\n', strip=True)
+        # Check for #akció or #akcio posts only
+        if not '#akci' in text.lower():
+            continue
+
         id          = int(message_id_tag.get_text(strip=True)[1:]) # Slice out the '#' character
         datetime    = date_tag.get_text(strip=True)
         author_nick = author_nick_tag.get_text(strip=True)
-
-        convert_children_link_tags_to_discord_links(text_tag)
-        text = text_tag.get_text(separator='\n', strip=True)
 
         data_scraped.append(ForumMessage(id, datetime, author_nick, text))
 
