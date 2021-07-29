@@ -7,6 +7,7 @@ import tempfile
 import datetime
 import textwrap
 from pathlib import Path
+from discord.errors import DiscordServerError
 from discord.ext import commands, tasks
 from pretty_help import PrettyHelp
 import music_commands
@@ -23,6 +24,7 @@ run_indicator = Path(f'{tempfile.gettempdir()}/dc_moderator_bot')
 class WrongChannelError(commands.CommandError):
     'Raised when the user wants to run a command in the channel of music bot.'
     pass
+
 
 class InsultAPIError(Exception):
     'Raised when the Evil Insult API having issues.'
@@ -100,6 +102,9 @@ async def on_ready():
     global ch_commands
     global ch_bot_test
     global ch_dealwatch
+    global insult_api_session
+
+    insult_api_session = aiohttp.ClientSession()
 
     music_bot = bot.get_user(235088799074484224)
     ch_music = bot.get_channel(821946547767345152)
@@ -144,6 +149,9 @@ async def check_channel(ctx):
 
 @bot.event
 async def on_command_error(ctx, exception):
+
+    moderator = discord.utils.get(ctx.guild.roles, id=821838588017639516)
+
     if isinstance(exception, commands.CommandNotFound):
         title = 'Unknown command!'
         description = 'The given command could not be found.'
@@ -160,6 +168,12 @@ async def on_command_error(ctx, exception):
         title = 'Warning!'
         sub_title = 'Prohibited!'
         description = f'You can only use {music_bot.mention}\'s commands in this channel.'
+        await send_warning(reply_to=ctx.message, title=title, sub_title=sub_title, description=description, delete_after=10)
+
+    elif isinstance(exception, commands.MissingRole):
+        title = 'Warning!'
+        sub_title ='You are not allowed to use this command!'
+        description = f'You are required to have {moderator.mention} role to use this command.'
         await send_warning(reply_to=ctx.message, title=title, sub_title=sub_title, description=description, delete_after=10)
 
     else:
@@ -222,7 +236,8 @@ async def _insult(ctx, target_user : discord.User = None):
         await ctx.message.delete(delay=10)
 
 
-@bot.command(name='pin')
+@bot.command(name='pin', aliases=['save'])
+@commands.has_role('Admin')
 async def _pin(ctx):
     'Pins the last message of the channel that\'s not a command nor sent by the bot.'
     history=ctx.channel.history(limit=10)
@@ -239,6 +254,7 @@ async def _pin(ctx):
 
 
 @bot.command(name='clear', aliases=['erase', 'clean', 'purge'])
+@commands.has_role("Admin")
 async def _clear(ctx, channel : typing.Optional[discord.TextChannel], count : int = 1):
     'Deletes past messages based on given number. Cannot delete past 2 weeks.'
     if not channel:
