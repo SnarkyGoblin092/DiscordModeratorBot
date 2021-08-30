@@ -26,8 +26,8 @@ def convert_html_link_tags_to_discord_links(parent):
 
 
 async def request_webpage_src(from_message_id:int) -> str:
-    'Returns the source code of the webpage. The displayed messages are requested from from_message_id + 199'
-    topic_url = f'https://prohardver.hu/tema/bestbuy_topik_akcio_ajanlasakor_akcio_hashtag_kote/hsz_{from_message_id}-{from_message_id+199}.html'
+    'Returns the source code of the webpage. The displayed messages are requested from from_message_id + 198'
+    topic_url = f'https://prohardver.hu/tema/bestbuy_topik_akcio_ajanlasakor_akcio_hashtag_kote/hsz_{from_message_id}-{from_message_id+198}.html'
     async with aiohttp.ClientSession() as client:
         async with client.get(topic_url) as response:
             if not response.status == 200:
@@ -68,7 +68,7 @@ async def scrape_recursively(from_message_id):
     if data:
         last_entry_id = data[-1].id
         # If we scraped the maximum data of the request (199 entries)
-        if from_message_id+199 == last_entry_id:
+        if from_message_id+198 == last_entry_id:
             # then request the next messages recursively.
             return tuple(data + await scrape_recursively(last_entry_id+1))
     
