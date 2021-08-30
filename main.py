@@ -79,8 +79,8 @@ async def task_dealwatch():
 
 
     if forum_messages:
-        # Using TextWrapper to limit the message size (DC allows the maximum of 2000 chars)
-        text_wrapper = textwrap.TextWrapper(width=1900, break_long_words=True)
+        # Using TextWrapper to limit the message size (DC allows the maximum of 2000 chars but only 1024 chars in embed body)
+        text_wrapper = textwrap.TextWrapper(width=1024, break_long_words=True)
         for message in forum_messages:
             cutted_text = text_wrapper.wrap(message.text)
             # Send long messages in "chunks"
